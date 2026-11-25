@@ -11,13 +11,13 @@ class TipoDocumento(str, Enum):
     DESCONOCIDO = "desconocido"
 
 class Dependencia(str, Enum):
-    COMPRAS = "Compras"
-    CUENTAS_POR_PAGAR = "Cuentas por pagar"
-    TALENTO_HUMANO = "Talento Humano"
-    JURIDICA = "Juridica"
-    ATENCION_USUARIO = "Atencion al usuario"
-    CLAUDIA_HERRERA = "Claudia Herrera"
-    NO_RADICAR = "No radicar"
+    COMPRAS = "COMPRAS"
+    CUENTAS_POR_PAGAR = "CUENTAS_POR_PAGAR"
+    TALENTO_HUMANO = "TALENTO_HUMANO"
+    JURIDICA = "JURIDICA"
+    ATENCION_USUARIO = "ATENCION_USUARIO"
+    CLAUDIA_HERRERA = "CLAUDIA_HERRERA"
+    NO_RADICAR = "NO_RADICAR"
 
 class EstadoRadicado(str, Enum):
     RADICADO = "radicado"

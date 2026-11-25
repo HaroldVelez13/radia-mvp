@@ -16,6 +16,13 @@ from app.application.services.reglas_peticion import (
     EntidadUrgente,
     clasificar_peticion,
 )
+from app.application.services.reglas_viaticos import (
+    validar_formato_viatico,
+    validar_firma,
+    validar_antiguedad_5_dias,
+    validar_viatico_completo,
+    ResultadoViatico,
+)
 from app.application.services.vencimiento import (
     calcular_vencimiento_peticion,
     calcular_vencimiento_simple,
@@ -24,15 +31,7 @@ from app.application.services.vencimiento import (
 )
 
 
-# Fixtures for test data paths
-@pytest.fixture
-def libro_path():
-    return Path("/app/data/libro/libro-radicacion-2026.xlsx")
-
-
-@pytest.fixture
-def maestro_path():
-    return Path("/app/data/maestro/maestro-proveedores.csv")
+# Fixtures provided by conftest.py (data_dir, libro_path, maestro_path, etc.)
 
 
 class TestNormalizacion:
@@ -519,3 +518,229 @@ class TestUtilidadesFestivos:
         assert es_dia_habil_colombia(date(2024, 3, 28)) is False
         # Viernes Santo 2024
         assert es_dia_habil_colombia(date(2024, 3, 29)) is False
+
+
+class TestViaticosFormato:
+    """Tests for viatico TH-F-012 format validation."""
+
+    def test_formato_valido_vi_guion(self):
+        """Test valid VI-YYYY-NNNN format."""
+        valido, motivo = validar_formato_viatico("VI-2026-0001")
+        assert valido is True
+        assert "valido" in motivo.lower()
+
+    def test_formato_valido_viatico_guion(self):
+        """Test valid VIATICO-YYYY-NNNNN format."""
+        valido, motivo = validar_formato_viatico("VIATICO-2026-12345")
+        assert valido is True
+
+    def test_formato_valido_via_tico_guion(self):
+        """Test valid VIÁTICO-YYYY-NNNN format."""
+        valido, _ = validar_formato_viatico("VIÁTICO-2026-0999")
+        assert valido is True
+
+    def test_formato_valido_case_insensitive(self):
+        """Test format is case insensitive."""
+        valido, _ = validar_formato_viatico("vi-2026-0001")
+        assert valido is True
+        valido, _ = validar_formato_viatico("ViAtIcO-2026-0001")
+        assert valido is True
+
+    def test_formato_invalido_vacio(self):
+        """Test empty viatico number."""
+        valido, motivo = validar_formato_viatico("")
+        assert valido is False
+        assert "vacío" in motivo.lower() or "vacio" in motivo.lower()
+
+    def test_formato_invalido_sin_guion(self):
+        """Test missing dashes."""
+        valido, _ = validar_formato_viatico("VI20260001")
+        assert valido is False
+
+    def test_formato_invalido_anio_corto(self):
+        """Test year too short."""
+        valido, _ = validar_formato_viatico("VI-26-0001")
+        assert valido is False
+
+    def test_formato_invalido_numero_corto(self):
+        """Test numero too short."""
+        valido, _ = validar_formato_viatico("VI-2026-12")
+        assert valido is False
+
+
+class TestViaticosFirma:
+    """Tests for viatico firma (signature) detection."""
+
+    def test_firma_presente(self):
+        """Test firma pattern detected."""
+        valido, motivo = validar_firma("Firma: Juan Perez")
+        assert valido is True
+        assert "presente" in motivo.lower()
+
+    def test_firmado_por(self):
+        """Test firmado por pattern."""
+        valido, _ = validar_firma("firmado por Maria Gomez")
+        assert valido is True
+
+    def test_aprobado_por(self):
+        """Test aprobado por pattern."""
+        valido, _ = validar_firma("aprobado por Carlos Ruiz")
+        assert valido is True
+
+    def test_autorizado_por(self):
+        """Test autorizado por pattern."""
+        valido, _ = validar_firma("autorizado por Ana Lopez")
+        assert valido is True
+
+    def test_firma_no_presente(self):
+        """Test no firma pattern."""
+        valido, motivo = validar_firma("Este es un texto sin firma")
+        assert valido is False
+        assert "sin firma" in motivo.lower()
+
+    def test_firma_vacio(self):
+        """Test empty text."""
+        valido, _ = validar_firma("")
+        assert valido is False
+
+    def test_firma_solo_espacios(self):
+        """Test whitespace only text."""
+        valido, _ = validar_firma("   ")
+        assert valido is False
+
+
+class TestViaticosAntiguedad5Dias:
+    """Tests for viatico 5-business-days rule."""
+
+    def test_dentro_5_dias_valido(self):
+        """Test 5 days before trip is valid."""
+        from datetime import date
+        valido, motivo = validar_antiguedad_5_dias(
+            date(2026, 11, 20),  # recepcion
+            date(2026, 11, 25),  # viaje (5 dias despues)
+        )
+        assert valido is True
+
+    def test_exacto_5_dias(self):
+        """Test exactly 5 days is valid."""
+        valido, _ = validar_antiguedad_5_dias(
+            date(2026, 11, 20),
+            date(2026, 11, 25),
+        )
+        assert valido is True
+
+    def test_excede_6_dias(self):
+        """Test more than 5 days is valid."""
+        valido, _ = validar_antiguedad_5_dias(
+            date(2026, 11, 20),
+            date(2026, 11, 27),
+        )
+        assert valido is True
+
+    def test_menos_de_5_dias_invalido(self):
+        """Test less than 5 days is invalid."""
+        valido, motivo = validar_antiguedad_5_dias(
+            date(2026, 11, 22),
+            date(2026, 11, 25),
+        )
+        assert valido is False
+
+    def test_recepcion_antes_viatico(self):
+        """Test recepcion date before viatico date is invalid."""
+        valido, motivo = validar_antiguedad_5_dias(
+            date(2026, 11, 26),
+            date(2026, 11, 25),
+        )
+        assert valido is False
+
+    def test_mismo_dia(self):
+        """Test same day is invalid."""
+        valido, _ = validar_antiguedad_5_dias(
+            date(2026, 11, 25),
+            date(2026, 11, 25),
+        )
+        assert valido is False
+
+    def test_datetime_objects(self):
+        """Test datetime input works."""
+        from datetime import datetime
+        valido, _ = validar_antiguedad_5_dias(
+            datetime(2026, 11, 20, 9, 0),
+            datetime(2026, 11, 26, 9, 0),
+        )
+        assert valido is True
+
+
+class TestViaticoCompleto:
+    """Tests for complete viatico validation."""
+
+    def test_viatico_valido_completo(self):
+        """Test all validations pass."""
+        resultado = validar_viatico_completo(
+            numero_viatico="VI-2026-0001",
+            texto_documento="Firma: Juan Perez, aprobado por el jefe",
+            fecha_recepcion=date(2026, 11, 20),
+            fecha_viatico=date(2026, 11, 26),
+        )
+        assert resultado.es_valido is True
+        assert "valido" in resultado.motivo.lower()
+
+    def test_viatico_formato_invalido(self):
+        """Test invalid formato fails complete validation."""
+        resultado = validar_viatico_completo(
+            numero_viatico="INVALIDO",
+            texto_documento="Firma: Juan Perez",
+            fecha_recepcion=date(2026, 11, 20),
+            fecha_viatico=date(2026, 11, 26),
+        )
+        assert resultado.es_valido is False
+
+    def test_viatico_sin_firma(self):
+        """Test missing firma fails complete validation."""
+        resultado = validar_viatico_completo(
+            numero_viatico="VI-2026-0001",
+            texto_documento="Sin firma ni aprobacion",
+            fecha_recepcion=date(2026, 11, 20),
+            fecha_viatico=date(2026, 11, 26),
+        )
+        assert resultado.es_valido is False
+
+    def test_viatico_excede_5_dias(self):
+        """Test less than 5 days fails complete validation."""
+        resultado = validar_viatico_completo(
+            numero_viatico="VI-2026-0001",
+            texto_documento="Firma: Juan Perez",
+            fecha_recepcion=date(2026, 11, 23),
+            fecha_viatico=date(2026, 11, 25),
+        )
+        assert resultado.es_valido is False
+
+    def test_viatico_recepcion_antes(self):
+        """Test recepcion before viatico fails."""
+        resultado = validar_viatico_completo(
+            numero_viatico="VI-2026-0001",
+            texto_documento="Firma: Juan Perez",
+            fecha_recepcion=date(2026, 11, 26),
+            fecha_viatico=date(2026, 11, 25),
+        )
+        assert resultado.es_valido is False
+
+    def test_viatico_limite_exacto_5_dias(self):
+        """Test exactly 5 days passes complete validation."""
+        resultado = validar_viatico_completo(
+            numero_viatico="VI-2026-0001",
+            texto_documento="Firma: Juan Perez",
+            fecha_recepcion=date(2026, 11, 20),
+            fecha_viatico=date(2026, 11, 25),
+        )
+        assert resultado.es_valido is True
+
+    def test_resultado_viatico_creation(self):
+        """Test ResultadoViatico dataclass."""
+        r = ResultadoViatico(es_valido=True, motivo="OK", observaciones=["obs1"])
+        assert r.es_valido is True
+        assert r.motivo == "OK"
+        assert r.observaciones == ["obs1"]
+
+        r2 = ResultadoViatico(es_valido=False, motivo="Fail")
+        assert r2.observaciones == []
