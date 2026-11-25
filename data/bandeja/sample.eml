@@ -1,0 +1,19 @@
+From: Martha Rodriguez <martha@radia.com>
+To: Claudia Lopez <claudia@radia.com>
+Subject: Test email with attachment
+Date: Mon, 25 Nov 2024 10:30:00 -0500
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary123"
+
+--boundary123
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+SG9sYSBDbGF1ZGlhLQoKRXN0ZSBlcyB1biBjb3JyZW8gZGUgcHJ1ZWJhIGNvbiB1biBhZGphbnRvLg==
+--boundary123
+Content-Type: application/pdf; name="documento.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="documento.pdf"
+
+JVBERi0xLjQKJcOkw7zDtsO1CjEgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCg==
+--boundary123--

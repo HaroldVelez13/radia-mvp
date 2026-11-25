@@ -1,0 +1,25 @@
+From: Martha Rodriguez <martha@radia.com>
+To: Claudia Lopez <claudia@radia.com>
+Subject: Dos documentos adjuntos
+Date: Mon, 25 Nov 2024 10:30:00 -0500
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary123"
+
+--boundary123
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+SG9sYSBDbGF1ZGlhLQoKQWRqdW50byBkb3MgZG9jdW1lbnRvcyBQREYu
+--boundary123
+Content-Type: application/pdf; name="factura_001.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="factura_001.pdf"
+
+JVBERi0xLjQKJcOkw7zDtsO1CjEgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCg==
+--boundary123
+Content-Type: application/pdf; name="factura_002.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="factura_002.pdf"
+
+JVBERi0xLjQKJcOkw7zDtsO1CjEgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCg==
+--boundary123--
