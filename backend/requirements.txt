@@ -1,0 +1,16 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+pydantic==2.9.0
+pydantic-settings==2.4.0
+python-multipart==0.0.9
+eml-parser==1.12.0
+PyMuPDF==1.24.0
+python-docx==1.1.2
+openpyxl==3.1.5
+chromadb==0.5.0
+sentence-transformers==3.0.0
+# habilmente==1.2.0  # not available, using 0.1.1
+habilmente==0.1.1
+httpx==0.27.0
+python-dotenv==1.0.0
+loguru==0.7.2
