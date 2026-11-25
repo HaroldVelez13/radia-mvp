@@ -13,6 +13,7 @@ services:
       - .env.example
     depends_on:
       - ollama
+      - jev-style
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   ollama:
@@ -24,6 +25,18 @@ services:
       - ./ollama_data:/root/.ollama
     # Para 16GB RAM, usar qwen3:8b
     # docker exec radia-ollama ollama pull qwen3:8b
+
+  jev-style:
+    image: ghcr.io/radia-project/jev-style-classifier:latest
+    container_name: radia-jev-style
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./jev_style_data:/app/data
+    environment:
+      - MODEL=Jev-Style-0.8B-Decision-v3
+    # For local development, build from source:
+    # build: ./jev_style_classifier
 
   frontend:
     build: ./frontend
@@ -39,3 +52,4 @@ services:
 
 volumes:
   ollama_data:
+  jev_style_data:
