@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  api:
+    build: ./backend
+    container_name: radia-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./data:/data
+      - ./chroma_db:/app/chroma_db
+    env_file:
+      - .env.example
+    depends_on:
+      - ollama
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: radia-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    # Para 16GB RAM, usar qwen3:8b
+    # docker exec radia-ollama ollama pull qwen3:8b
+
+  frontend:
+    build: ./frontend
+    container_name: radia-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - .env.example
+    command: npm run dev
+
+volumes:
+  ollama_data:
