@@ -1,9 +1,8 @@
-# Placeholder Docling / PyMuPDF
+"""Docling / PyMuPDF PDF text extraction with OCR fallback."""
+
+from app.infrastructure.pdf.extractor import extract_text_from_pdf, is_scanned_pdf
+
+
 def extract_text_from_pdf(pdf_path: str) -> str:
-    # T1.3
-    try:
-        import fitz
-        doc = fitz.open(pdf_path)
-        return "\n".join([page.get_text() for page in doc])
-    except Exception as e:
-        return f"Error OCR: {e}"
+    """Extract text from PDF with OCR fallback for scanned documents."""
+    return extract_text_from_pdf(pdf_path)
