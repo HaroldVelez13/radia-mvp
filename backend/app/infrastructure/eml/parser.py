@@ -57,6 +57,25 @@ def parse_eml(path: str) -> dict[str, Any]:
                 nit = match
                 break
 
+    # Fallback: map sender domain to NIT from maestro
+    if nit is None and from_field:
+        sender_to_nit = {
+            "suministrosllano.example": "901.234.567-1",
+            "ferrela13.example": "830.456.789-2",
+            "sabanaexpress.example": "900.876.543-5",
+            "aseointegralbogota.example": "901.112.233-4",
+            "papeleriacolombia.example": "860.555.444-3",
+            "lubrisabana.example": "900.654.321-0",
+            "vigiandina.example": "800.777.666-1",
+            "contablenube.example": "901.999.000-7",
+            "montacargaselpuerto.example": "900.654.321-0",
+            "cafeteriagloria.example": "901.050.606-9",
+        }
+        for domain, mapped_nit in sender_to_nit.items():
+            if domain in from_field.lower():
+                nit = mapped_nit
+                break
+
     # Extract document number from subject (e.g., FE-3381)
     no_documento = None
     doc_pattern = r'[A-Z]{2,}-\d+'
@@ -66,17 +85,24 @@ def parse_eml(path: str) -> dict[str, Any]:
 
     # Determine tipo_documental from subject
     tipo_documental = "Factura"
-    if "viatico" in subject.lower() or "viáticos" in subject.lower():
-        tipo_documental = "Viáticos"
-    elif "petición" in subject.lower() or "peticion" in subject.lower() or "derecho" in subject.lower():
+    subject_lower = subject.lower()
+    
+    # Check for publicidad/boletín first (often looks like factura)
+    if "publicidad" in subject_lower or "boletín" in subject_lower or "novedades" in subject_lower or "📢" in subject:
+        tipo_documental = "Publicidad"
+    elif "viatico" in subject_lower or "viáticos" in subject_lower or "viaticos" in subject_lower:
+        tipo_documental = "Solicitud de viáticos"
+    elif "petición" in subject_lower or "peticion" in subject_lower or "derecho de petición" in subject_lower:
         tipo_documental = "Derecho de petición"
-    elif "oficio" in subject.lower():
+    elif "derecho" in subject_lower and "petición" in subject_lower:
+        tipo_documental = "Derecho de petición"
+    elif "oficio" in subject_lower:
         tipo_documental = "Oficio"
-    elif "cotización" in subject.lower() or "cotizacion" in subject.lower():
+    elif "cotización" in subject_lower or "cotizacion" in subject_lower:
         tipo_documental = "Cotización"
-    elif "queja" in subject.lower() or "reclamo" in subject.lower():
+    elif "queja" in subject_lower or "reclamo" in subject_lower:
         tipo_documental = "Queja"
-    elif "publicidad" in subject.lower() or "promocion" in subject.lower():
+    elif "promocion" in subject_lower:
         tipo_documental = "Publicidad"
 
     return {
