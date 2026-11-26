@@ -56,6 +56,9 @@ class ChromaClient:
                 name=self.COLLECTION_PROVEEDORES,
                 metadata={"hnsw:space": "cosine"}
             )
+            # If collection has data, mark as available
+            if self._proveedores_collection.count() > 0:
+                self._available = True
         return self._proveedores_collection
 
     def _get_radicados_collection(self):
@@ -66,6 +69,9 @@ class ChromaClient:
                 name=self.COLLECTION_RADICADOS,
                 metadata={"hnsw:space": "cosine"}
             )
+            # If collection has data, mark as available
+            if self._radicados_collection.count() > 0:
+                self._available = True
         return self._radicados_collection
 
     def initialize(self, proveedores_data: list[dict] = None, radicados_data: list[dict] = None) -> bool:
@@ -211,10 +217,9 @@ class ChromaClient:
         Returns:
             List of dicts with keys: nit, razon_social, score, metadata
         """
-        if not self._available:
-            return self._fallback_buscar_proveedor(nombre, n_results)
-        
         try:
+            # Accessing collection will set _available if data exists
+            collection = self._get_proveedores_collection()
             collection = self._get_proveedores_collection()
             model = self._get_embedding_model()
             
@@ -264,10 +269,9 @@ class ChromaClient:
         Returns:
             Dict with: es_duplicado (bool), duplicado_radicado (str|None), score (float), metadata (dict|None)
         """
-        if not self._available:
-            return self._fallback_es_duplicado(nit, numero_factura)
-        
         try:
+            # Accessing collection will set _available if data exists
+            collection = self._get_radicados_collection()
             collection = self._get_radicados_collection()
             model = self._get_embedding_model()
             
